@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using StarChart.Data;
+using StarChart.Models;
 
 namespace StarChart.Controllers
 {
@@ -49,6 +50,49 @@ namespace StarChart.Controllers
                     .Where(obj => obj.OrbitedObjectId == celestialObject.Id).ToList();
 
             return Ok(celestialObjects.ToList());
+        }
+
+        [HttpPost]
+        public IActionResult Create([FromBody] CelestialObject celestialObject)
+        {
+            _context.CelestialObjects.Add(celestialObject);
+            return CreatedAtRoute("GetById", new {celestialObject.Id}, celestialObject);
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Update(int id, CelestialObject celestialObject)
+        {
+            var celestial = _context.CelestialObjects.Find(id);
+            if (celestial == null) return NotFound();
+
+            celestial.Name = celestialObject.Name;
+            celestial.OrbitalPeriod = celestialObject.OrbitalPeriod;
+            celestial.OrbitedObjectId = celestialObject.OrbitedObjectId;
+            _context.CelestialObjects.Update(celestial);
+            _context.SaveChanges();
+            return NoContent();
+        }
+
+        [HttpPatch("{id}/{name}")]
+        public IActionResult RenameObject(int id, string name)
+        {
+            var celestial = _context.CelestialObjects.Find(id);
+            if (celestial == null) return NotFound();
+            celestial.Name = name;
+            _context.CelestialObjects.Update(celestial);
+            _context.SaveChanges();
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            var celestialsToDelete = _context.CelestialObjects.Where(cob => cob.Id == id || cob.OrbitedObjectId == id)
+                .ToList();
+            if (!celestialsToDelete.Any()) return NotFound();
+            _context.CelestialObjects.RemoveRange(celestialsToDelete);
+            _context.SaveChanges();
+            return NoContent();
         }
     }
 }
